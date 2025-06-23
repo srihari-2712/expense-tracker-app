@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import ExpenseList from './components/ExpenseList';
 import AddExpenseForm from './components/AddExpenseForm';
 import ExpenseSummary from './components/ExpenseSummary';
+import ExpenseCharts from './components/ExpenseCharts';
+import BudgetBar from './components/BudgetBar';
+import LoginPage from './components/LoginPage';
 import './App.css';
 
 const CURRENCIES = [
@@ -31,6 +34,9 @@ function App() {
   const [filter, setFilter] = useState('All');
   const [currency, setCurrency] = useState(CURRENCIES[3]); // INR default
   const [rates, setRates] = useState(DEFAULT_RATES);
+  const [showLogin, setShowLogin] = useState(false);
+  const [budget, setBudget] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     fetch('https://api.exchangerate-api.com/v4/latest/USD')
@@ -42,6 +48,10 @@ function App() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    document.body.className = darkMode ? 'dark' : '';
+  }, [darkMode]);
 
   const handleAddExpense = (expense) => {
     setExpenses(prev => [
@@ -69,11 +79,44 @@ function App() {
   };
 
   const convertedExpenses = getConvertedExpenses();
+  const total = convertedExpenses.reduce((sum, e) => sum + (typeof e.convertedAmount === 'number' ? e.convertedAmount : 0), 0);
+
+  if (showLogin) {
+    return (
+      <div className={"app-container" + (darkMode ? ' dark' : '')}>
+        <header>
+          <h1>Expense Tracker</h1>
+        </header>
+        <main>
+          <button onClick={() => setShowLogin(false)} style={{marginBottom: '2rem'}}>Back to App</button>
+          <LoginPage />
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="app-container">
+    <div className={"app-container" + (darkMode ? ' dark' : '')}>
       <header>
         <h1>Expense Tracker</h1>
+        <button
+          onClick={() => setShowLogin(true)}
+          style={{position: 'absolute', top: 20, right: 120}}
+        >
+          Login
+        </button>
+        <button
+          className={"dark-toggle-btn" + (darkMode ? ' active' : '')}
+          onClick={() => setDarkMode(dm => !dm)}
+          style={{position: 'absolute', top: 20, right: 20}}
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {darkMode ? (
+            <span role="img" aria-label="Light">🌞</span>
+          ) : (
+            <span role="img" aria-label="Dark">🌙</span>
+          )}
+        </button>
       </header>
       <main>
         <ExpenseSummary
@@ -82,6 +125,9 @@ function App() {
           setCurrency={setCurrency}
           rates={rates}
         />
+        <BudgetBar total={total} currency={currency} onSetBudget={setBudget} budget={budget} />
+        <ExpenseCharts expenses={convertedExpenses} />
+        <h2 style={{marginTop: '2rem'}}>Add an Expense</h2>
         <AddExpenseForm onAdd={handleAddExpense} currency={currency.code} />
         <ExpenseList
           expenses={convertedExpenses}

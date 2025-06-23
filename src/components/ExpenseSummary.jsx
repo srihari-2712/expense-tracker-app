@@ -14,6 +14,11 @@ function ExpenseSummary({ expenses, currency, setCurrency, rates }) {
   // Calculate total in selected currency using numeric convertedAmount
   const total = expenses.reduce((sum, e) => sum + (typeof e.convertedAmount === 'number' ? e.convertedAmount : 0), 0).toFixed(2);
 
+  // Calculate total in INR
+  const inrRate = rates['INR'] || 1;
+  const selectedRate = rates[currency.code] || 1;
+  const totalInINR = (total / selectedRate * inrRate).toFixed(2);
+
   return (
     <div className="summary">
       <label>
@@ -28,10 +33,11 @@ function ExpenseSummary({ expenses, currency, setCurrency, rates }) {
         </select>
       </label>
       <span style={{ marginLeft: '1rem' }}>
-        Total Spent: {currency.symbol}{total}
+        Total Spent: {currency.symbol}{total} (₹{totalInINR} INR)
       </span>
     </div>
   );
 }
 
 export default ExpenseSummary;
+
